@@ -1,0 +1,270 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#2d6a4f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>小花园</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' style='stop-color:%232d6a4f'/><stop offset='100%25' style='stop-color:%2366ccff'/></linearGradient></defs><circle cx='50' cy='50' r='46' fill='url(%23g)'/><text y='.74em' font-size='40' text-anchor='middle' fill='white'>叶</text><text x='72' y='28' font-size='18' fill='white' opacity='0.9'>♪</text></svg>">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="logo">
+    <span class="logo-icon">叶</span>
+    <span class="logo-text">小花园</span>
+    <span class="logo-note">♪</span>
+  </div>
+  <div class="nav-items">
+    <a href="#" data-page="dashboard" class="nav-item active"><span class="nav-icon">◆</span> 总览</a>
+    <a href="#" data-page="device" class="nav-item"><span class="nav-icon">◎</span> 设备</a>
+    <a href="#" data-page="strategies" class="nav-item"><span class="nav-icon">◇</span> 方案</a>
+    <a href="#" data-page="gallery" class="nav-item"><span class="nav-icon">▣</span> 相册</a>
+  </div>
+  <div class="nav-footer">
+    <div id="userInfo" class="user-info-mini" style="display:none"><span class="avatar">(*´▽`*)</span><span id="navUsername"></span></div>
+    <button id="btnLogin" class="btn btn-sm btn-outline" onclick="showAuth('login')">登录</button>
+    <button id="btnLogout" class="btn btn-sm btn-ghost" style="display:none" onclick="logout()">退出</button>
+  </div>
+</nav>
+
+<!-- 移动端底部导航 -->
+<nav id="bottomNav">
+  <a href="#" data-page="dashboard" class="bn-item active">
+    <span class="bn-icon">◆</span><span class="bn-label">总览</span>
+  </a>
+  <a href="#" data-page="device" class="bn-item">
+    <span class="bn-icon">◎</span><span class="bn-label">设备</span>
+  </a>
+  <a href="#" data-page="strategies" class="bn-item">
+    <span class="bn-icon">◇</span><span class="bn-label">方案</span>
+  </a>
+  <a href="#" data-page="gallery" class="bn-item">
+    <span class="bn-icon">▣</span><span class="bn-label">相册</span>
+  </a>
+</nav>
+
+<!-- 汉堡菜单按钮 -->
+<button id="hamburger" onclick="toggleSidebar()">☰</button>
+
+<main id="main">
+
+  <!-- ====== 总览 ====== -->
+  <section id="page-dashboard" class="page active">
+    <div class="page-header"><h1>总览</h1><span id="liveTime" class="live-badge">● 实时</span></div>
+    <div class="stat-cards" id="statCards">
+      <div class="stat-card"><div class="stat-icon">(°▽°)</div><div class="stat-value" id="statTemp">--</div><div class="stat-label">温度 °C</div></div>
+      <div class="stat-card"><div class="stat-icon">(´ω`)</div><div class="stat-value" id="statHum">--</div><div class="stat-label">空气湿度 %</div></div>
+      <div class="stat-card"><div class="stat-icon">(・∀・)</div><div class="stat-value" id="statHealth">--</div><div class="stat-label">健康指数</div></div>
+      <div class="stat-card"><div class="stat-icon">(・へ・)</div><div class="stat-value" id="statEC">--</div><div class="stat-label">EC μS/cm</div></div>
+      <div class="stat-card"><div class="stat-icon">(｀・ω・´)</div><div class="stat-value" id="statStage">--</div><div class="stat-label">生长阶段</div></div>
+      <div class="stat-card"><div class="stat-icon">(^^)/</div><div class="stat-value" id="statLight">--</div><div class="stat-label">光照</div></div>
+    </div>
+
+    <!-- 3泵+灯状态 -->
+    <div class="pump-bar">
+      <div class="pump-item" id="pumpWater"><span class="pump-dot"></span><span>浇水泵</span><b class="pump-text">关闭</b></div>
+      <div class="pump-item" id="pumpFertA"><span class="pump-dot"></span><span>肥料A</span><b class="pump-text">关闭</b></div>
+      <div class="pump-item" id="pumpFertB"><span class="pump-dot"></span><span>肥料B</span><b class="pump-text">关闭</b></div>
+      <div class="pump-item" id="pumpLight"><span class="pump-dot"></span><span>补光灯</span><b class="pump-text" id="lightVal">0%</b></div>
+    </div>
+    <div style="margin-bottom:16px;font-size:13px;color:var(--text-secondary)">
+      从机：<strong id="slaveCount" style="color:var(--accent)">--</strong> 台在线
+      <span id="slaveSensor" style="margin-left:16px">
+        | 当前节点 EC:<strong id="slvEc">--</strong>
+        土温:<strong id="slvTemp">--</strong>°C
+        土湿:<strong id="slvHum">--</strong>%
+      </span>
+    </div>
+
+    <div class="trend-toolbar">
+      <div><strong>趋势记录</strong><span id="trendMeta">正在读取</span></div>
+      <div class="range-buttons">
+        <button data-hours="1">1小时</button><button data-hours="6">6小时</button><button data-hours="24" class="active">24小时</button><button data-hours="168">7天</button>
+      </div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-box"><h3>健康趋势</h3><canvas id="chartHealth"></canvas></div>
+      <div class="chart-box"><h3>温湿度变化</h3><canvas id="chartEnv"></canvas></div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-box"><h3>土壤EC & 湿度</h3><canvas id="chartSoil"></canvas></div>
+      <div class="chart-box"><h3>AI病害监测</h3><div id="aiBox" class="ai-status-box"><div class="ai-big-text" id="aiMainText">等待数据 (´･ω･`)</div><div id="aiDetail" class="ai-detail"></div></div></div>
+    </div>
+  </section>
+
+  <!-- ====== 设备 ====== -->
+  <section id="page-device" class="page">
+    <div class="page-header"><h1>设备架构</h1><span id="configStatus" class="badge">待下发</span></div>
+    <div class="arch-container">
+      <div class="arch-box master">
+        <div class="arch-title">主机 ESP32-S3</div>
+        <div class="arch-items">
+          <span>📷 OV2640 · AI推理</span><span>🖥 OLED 128x64</span>
+          <span>🌡 AM2301 温湿度</span><span>📡 RS485 主控</span>
+          <span>🎯 SG90 舵机旋转</span><span>🔔 蜂鸣器+LED</span>
+        </div>
+      </div>
+      <div class="arch-arrow">⟷ RS485 Modbus</div>
+      <div class="arch-box slave">
+        <div class="arch-title">从机 ESP32 <small>× 最多32台</small></div>
+        <div class="arch-items">
+          <span>☀ 光照传感器</span><span>💧 土壤湿度模拟</span>
+          <span id="archPump1" class="arch-pump">⏻ 浇水泵</span>
+          <span id="archPump2" class="arch-pump">⏻ 肥料泵A</span>
+          <span id="archPump3" class="arch-pump">⏻ 肥料泵B</span>
+          <span id="archLight" class="arch-pump">💡 补光灯 <span id="archLightVal">0%</span></span>
+        </div>
+      </div>
+      <div class="arch-arrow">⟷ RS485</div>
+      <div class="arch-box sensor">
+        <div class="arch-title">土壤三合一传感器</div>
+        <div class="arch-items"><span>🌱 土壤湿度(数字)</span><span>🌡 土壤温度</span><span>🧪 EC电导率</span></div>
+      </div>
+    </div>
+
+    <div class="config-card servo-card" style="margin-top:16px;margin-bottom:16px">
+      <h3>摄像头云台 · 实时控制</h3>
+      <p class="form-tip">360°连续舵机没有角度反馈，这里的数值是软件标定位置。上电时请让摄像头朝向中间基准。</p>
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="servo-step" onclick="stepServo(-1)">−</button>
+        <input type="range" id="servoSlider" min="20" max="160" step="1" value="90" style="flex:1;accent-color:var(--accent)">
+        <span id="servoVal" style="font-weight:bold;min-width:34px;color:var(--accent)">90</span>
+        <button class="servo-step" onclick="stepServo(1)">＋</button>
+        <button class="btn btn-primary btn-sm" onclick="saveServo()">移动</button>
+      </div>
+      <div class="servo-actions">
+        <button class="btn btn-sm btn-outline" onclick="jogServo('jog_left')">← 向左点动</button>
+        <button class="btn btn-sm btn-ghost" onclick="sendDeviceCommand('stop')">停止</button>
+        <button class="btn btn-sm btn-outline" onclick="jogServo('jog_right')">向右点动 →</button>
+      </div>
+    </div>
+
+    <div class="target-card">
+      <div class="auto-head"><div><h3>巡检列表</h3><p class="form-tip">已标定的种植位，可从摄像头远程寻植。</p></div><button class="btn btn-primary btn-sm" onclick="showTargetForm()">+ 添加</button></div>
+      <div id="patrolList" class="patrol-list"><p class="empty-text">正在读取标定信息...</p></div>
+    </div>
+
+    <div class="automation-card">
+      <div class="auto-head"><h3>自动寻植巡检</h3><span id="inspectionState" class="badge">未启用</span></div>
+      <div class="inspection-row">
+        <label><input type="checkbox" id="inspectionEnabled"> 自动运行</label>
+        <label>每 <input type="number" id="inspectionInterval" min="5" max="1440" value="30"> 分钟巡检一轮</label>
+        <button class="btn btn-primary btn-sm" onclick="saveInspection()">保存</button>
+        <button class="btn btn-outline btn-sm" onclick="startInspection()">立即巡检</button>
+      </div>
+    </div>
+
+    <div class="automation-card">
+      <div class="auto-head"><h3>自动养护</h3><span class="badge badge-success">设备端运行</span></div>
+      <div class="auto-grid">
+        <div><strong>自动浇水</strong><span>土壤低于下限，冷却结束后按节点浇水</span></div>
+        <div><strong>自动施肥</strong><span>EC低于生长阶段目标后选择肥料A/B</span></div>
+        <div><strong>EC稀释</strong><span>EC超过上限时启动清水泵降低浓度</span></div>
+        <div><strong>自动补光</strong><span>06:00-20:00光照不足时补光，夜间关闭</span></div>
+      </div>
+    </div>
+
+    <div class="config-card" style="margin-top:16px">
+      <h3>当前配置 <span class="config-plant-name" id="configPlantName"></span></h3>
+      <div class="cfg-slave-bar">
+        <label>目标从机</label>
+        <select id="cfgSlaveSelect"></select>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>植物日龄</label><input id="cfgAge" type="number" value="30"></div>
+        <div class="form-group"><label>植物名称</label><input id="cfgPlantName" placeholder="起个名吧~"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>土壤湿度下限</label><input id="cfgSoilMin" type="number" value="1800"></div>
+        <div class="form-group"><label>土壤湿度上限</label><input id="cfgSoilMax" type="number" value="2500"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>EC下限</label><input id="cfgEcMin" type="number" value="150"></div>
+        <div class="form-group"><label>EC上限</label><input id="cfgEcMax" type="number" value="300"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>浇水冷却(分)</label><input id="cfgWaterCd" type="number" value="5"></div>
+        <div class="form-group"><label>施肥冷却(分)</label><input id="cfgFertCd" type="number" value="60"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>自动补光阈值</label><input id="cfgLightMin" type="number" value="1600"><small>光照低于该值时打开</small></div>
+        <div class="form-group"><label>补光亮度 0-255</label><input id="cfgLightPwm" type="number" min="0" max="255" value="180"></div>
+      </div>
+      <button class="btn btn-primary btn-lg" onclick="saveConfig()">保存并下发到设备</button>
+    </div>
+  </section>
+
+  <!-- ====== 方案 ====== -->
+  <section id="page-strategies" class="page">
+    <div class="page-header"><h1>养护方案</h1><button class="btn btn-primary" onclick="showStrategyForm()">+ 创建方案</button></div>
+    <div class="tabs"><span class="tab active" data-tab="all">方案广场</span><span class="tab" data-tab="mine">我的方案</span></div>
+    <div id="strategyList" class="strategy-grid"></div>
+    <div id="strategyModal" class="modal" style="display:none">
+      <div class="modal-content">
+        <div class="modal-header"><h3 id="strategyModalTitle">创建养护方案</h3><span class="modal-close" onclick="closeStrategyForm()">&times;</span></div>
+        <div class="modal-body">
+          <input type="hidden" id="stratId">
+          <div class="form-group"><label>植物名称</label><input id="stratName" placeholder="例如：番茄、月季、多肉..."></div>
+          <div class="form-group"><label>方案简介</label><textarea id="stratDesc" rows="2" placeholder="简单描述下养护要点 (。・ω・。)"></textarea></div>
+          <div class="form-row"><div class="form-group"><label>土壤湿度下限</label><input id="stratSoilMin" type="number" value="1800"></div><div class="form-group"><label>土壤湿度上限</label><input id="stratSoilMax" type="number" value="2500"></div></div>
+          <div class="form-row"><div class="form-group"><label>EC下限</label><input id="stratEcMin" type="number" value="150"></div><div class="form-group"><label>EC上限</label><input id="stratEcMax" type="number" value="300"></div></div>
+          <div class="form-row"><div class="form-group"><label>浇水间隔(分)</label><input id="stratWaterCd" type="number" value="5"></div><div class="form-group"><label>施肥间隔(分)</label><input id="stratFertCd" type="number" value="60"></div></div>
+          <div class="form-group"><label><input type="checkbox" id="stratPublic" checked> 公开到方案广场</label></div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-ghost" onclick="closeStrategyForm()">取消</button><button class="btn btn-primary" onclick="saveStrategy()">保存</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== 相册 ====== -->
+  <section id="page-gallery" class="page">
+    <div class="page-header"><h1>植物相册</h1><button class="btn btn-outline btn-sm" id="btnTimelapse" onclick="toggleTimelapse()">▶ 延时播放</button></div>
+    <div id="timelapsePlayer" class="timelapse-player" style="display:none">
+      <div class="timelapse-frame"><img id="timelapseImg" alt="延时" style="display:none"><span id="timelapseEmpty">选择播放后显示照片</span></div>
+      <div class="timelapse-controls">
+        <span id="timelapseInfo">0 / 0</span>
+        <input type="range" id="timelapseSlider" min="0" max="100" value="0" oninput="seekTimelapse(this.value)">
+        <button class="btn btn-sm btn-ghost" onclick="toggleTimelapse()">■ 停止</button>
+        <select id="timelapseSpeed" onchange="changeSpeed()">
+          <option value="500">0.5s/张</option>
+          <option value="200" selected>0.2s/张</option>
+          <option value="100">0.1s/张</option>
+        </select>
+      </div>
+    </div>
+    <div id="imageGrid" class="image-grid"></div>
+  </section>
+
+</main>
+
+<div id="targetModal" class="modal" style="display:none">
+  <div class="modal-content">
+    <div class="modal-header"><h3 id="targetTitle">添加种植位</h3><span class="modal-close" onclick="closeTargetForm()">&times;</span></div>
+    <div class="modal-body">
+      <input type="hidden" id="targetId">
+      <div class="form-group"><label>植物/花盆名称</label><input id="targetName" placeholder="例如：1号番茄"></div>
+      <div class="form-row">
+        <div class="form-group"><label>执行从机</label><select id="targetSlave"></select><small id="targetSlaveHint"></small></div>
+        <div class="form-group"><label>摄像头软件位置 20-160</label><input id="targetPos" type="number" min="20" max="160" value="90"></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeTargetForm()">取消</button><button class="btn btn-primary" onclick="saveTarget()">保存标定</button></div>
+  </div>
+</div>
+
+<div id="authModal" class="modal" style="display:none">
+  <div class="modal-content auth-modal">
+    <div class="modal-header"><h3 id="authTitle">登录</h3><span class="modal-close" onclick="closeAuth()">&times;</span></div>
+    <div class="modal-body"><div class="form-group"><label>用户名</label><input id="authUser" placeholder="输入用户名"></div><div class="form-group"><label>密码</label><input id="authPass" type="password" placeholder="输入密码"></div></div>
+    <div class="modal-footer"><span id="authSwitch" style="cursor:pointer;color:var(--accent);font-size:14px" onclick="toggleAuth()">没有账号？去注册 (｀・ω・´)</span><button class="btn btn-primary" id="authBtn" onclick="doAuth()">登录</button></div>
+  </div>
+</div>
+<div id="toast" class="toast" style="display:none"></div>
+<script src="js/app.js"></script>
+</body>
+</html>
